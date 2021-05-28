@@ -15,12 +15,13 @@ function Playlist() {
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
   const [titleCORSProxy, setTitleCORSProxy] = useState("");
+  const [CORSProxStatus, setCORSProxStatus] = useState("");
   const [titleUserInput, setTitleUserInput] = useState("");
 
-  useEffect(() => {
-    console.log(URLPlaylist.findIndex(e => e.url === currPlayingURL))
-    //playlist updated, console log the curr playing URL
-  }, [URLPlaylist])
+  // useEffect(() => {
+  //   console.log(URLPlaylist.findIndex(e => e.url === currPlayingURL))
+  //   //playlist updated, console log the curr playing URL
+  // }, [URLPlaylist])
 
   //react-player
   function HandleOnError(error:any) {
@@ -31,10 +32,14 @@ function Playlist() {
  * Attempts to get the title using CORSProxyFetchChain. On fail make it an empty string, user inputs it.
  */
   function AttempGetURL(url:string) {
+    console.log(url)
+    setInputURL(url)
+    setCORSProxStatus("");
     CORSProxyFetchChain(url).then(function (result:any) {
       console.log(result)
-      if (result == null) {
+      if (result === "ALL_FAILED") {
         setTitleCORSProxy("");
+        setCORSProxStatus("ALL_FAILED");
       }
       else {
         setTitleCORSProxy(result);
@@ -77,6 +82,22 @@ function Playlist() {
     setReactPlayerRender(true);
   }
 
+  function PlayNextURL()
+  {
+    let currPlayingIndex = URLPlaylist.findIndex(e => e.url === currPlayingURL)
+    if(currPlayingIndex === URLPlaylist.length-1)
+    {
+      //reached end of playlist, stop
+      setReactPlayerRender(false);
+      setCurrPlayingURL("");
+    }
+    else
+    {
+      //play next URL
+      currPlayingIndex++;
+      setCurrPlayingURL(URLPlaylist[currPlayingIndex].url);
+    }
+  }
 
   return (
     <div id="Player">
@@ -84,7 +105,7 @@ function Playlist() {
       <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
       <br></br>
       <p>Title</p>
-      {inputURL !== "" && (titleUserInput || titleCORSProxy) === "" ? <p>Trying to resolve title...</p> : null}
+      {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
       <input value={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
       <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
       <br></br>
@@ -100,7 +121,7 @@ function Playlist() {
         />
         <a>end dnd</a>
         <br></br>
-        {reactPlayerRender && <ReactPlayer url={currPlayingURL} onError={(e) => { HandleOnError(e) }} controls={true} playing={true} onEnded={() => console.log("ended")}></ReactPlayer>}
+        {reactPlayerRender && <ReactPlayer url={currPlayingURL} onError={(e) => { HandleOnError(e) }} controls={true} playing={true} onEnded={() => PlayNextURL()}></ReactPlayer>}
       </div>
     </div>
   );
