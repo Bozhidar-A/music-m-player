@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { List, arrayMove } from 'react-movable';
 import ReactPlayer from 'react-player'
 import CORSProxyFetchChain from './CORSProxyFetchChain'
@@ -13,10 +13,14 @@ function Playlist() {
   const [URLPlaylist, setURLPlaylist] = useState<URLData[]>([]);
   const [inputURL, setInputURL] = useState<string>("");
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
+  const [reactPlayerPlaying, setReactPlayerPlaying] = useState(false);
+  const [reactPlayerVolume, setReactPlayerVolume] = useState(0.5);
+  const [reactPlayerSeek, setReactPlayerSeek] = useState(0);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
   const [titleCORSProxy, setTitleCORSProxy] = useState("");
   const [CORSProxStatus, setCORSProxStatus] = useState("");
   const [titleUserInput, setTitleUserInput] = useState("");
+  const reactPlayerRef = useRef<any>(null);
 
   // useEffect(() => {
   //   console.log(URLPlaylist.findIndex(e => e.url === currPlayingURL))
@@ -26,6 +30,12 @@ function Playlist() {
   //react-player
   function HandleOnError(error:any) {
     console.log(error)
+  }
+
+  function HandleSeek(seekToVal: string)
+  {
+    setReactPlayerSeek(parseFloat(seekToVal)); 
+    reactPlayerRef.current.seekTo(seekToVal);
   }
   
   /**
@@ -121,7 +131,14 @@ function Playlist() {
         />
         <a>end dnd</a>
         <br></br>
-        {reactPlayerRender && <ReactPlayer url={currPlayingURL} onError={(e) => { HandleOnError(e) }} controls={true} playing={true} onEnded={() => PlayNextURL()}></ReactPlayer>}
+        {reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()}></ReactPlayer>}
+        {reactPlayerRender && <footer>
+          <p>Volume</p>
+          <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
+          <p>Seek</p>
+          <input type="range" min="0" max="1" step="any" value={reactPlayerSeek} onChange={(e) => HandleSeek(e.target.value)}/>
+          <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)}>Play/Pause</button>
+        </footer>}
       </div>
     </div>
   );
