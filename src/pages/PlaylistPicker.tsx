@@ -1,48 +1,78 @@
 import firebase from 'firebase';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardBody, Container } from 'reactstrap';
 import IPageProps from '../interfaces/page';
-import {useCollectionData, useDocument, useDocumentData} from 'react-firebase-hooks/firestore';
 import { List, arrayMove } from 'react-movable';
 import { auth } from '../config/firebase';
+import IAllPlaylists from '../interfaces/IAllPlaylists';
 import { v4 as uuidv4 } from 'uuid';
 
 
 const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
-    const [playlists, setPlaylists] = useState<Array<{
-        name: string,
-        doc: string
-    }>>([]);
-    
+    const [playlists, setPlaylists] = useState<IAllPlaylists[]>([])
+
     var db = firebase.firestore()
 
     useEffect(() => {
-        db.collection("testbruh").doc(auth.currentUser?.uid).get().then(doc => {
+        db.collection("playlists").doc(auth.currentUser?.uid).get().then(doc => {
             if(doc.exists)
             {
                 setPlaylists(doc.data()!.arr)
             }
-        })
+        }).catch(err => console.log(err))
     }, [])
 
     function EachPlaylist(props:any)
     {
-        console.log(props)
         return(<div>
             <p>{props.data.name}</p>
-            <Link to={{pathname:`/playlist/${props.data.doc}`, state: { playlistsDocID: props.data.doc} }}>View Playlist</Link>
+            <Link to={{pathname:`/playlist/${props.data.doc}`, state: { docID: props.data.doc} }}>View Playlist</Link>
+            <button onClick={() => DeletePlaylist(props.data)}>DeletePlaylist</button>
         </div>)
+    }
+
+    function DeletePlaylist(obj:any)
+    {
+        if(window.confirm("Are you sure you want to delete this playlist?"))
+        {
+            db.collection("playlists").doc(auth.currentUser?.uid).update({
+                arr: firebase.firestore.FieldValue.arrayRemove(obj)
+            }).then(() =>{
+
+                //delete obj from state
+                setPlaylists(arr => arr.filter(el => el !== obj))
+
+                //firebase update
+                db.collection("playlistsData").doc(obj.doc).delete().catch(err => {
+                    console.error("Failed to delete playlistsData doc on playlist delete")
+                    console.error(err)
+                })
+            }).catch(err => {
+                alert("Failed to delete playlist!");
+                console.error(err);
+            })
+        }
     }
 
     function CreatePlaylist()
     {
         var name = prompt();
+        
         if(name !== null)
         {
-            setPlaylists(arr => [{name:name!, doc:"bruh"}, ...arr]);
-            db.collection("testbruh").doc(auth.currentUser?.uid).update({
-                arr: firebase.firestore.FieldValue.arrayUnion({name:name, doc:"bruh"})
+            db.collection("playlistsData").add({songs:[]}).then(doc => {
+
+                setPlaylists(arr => [{name:name!, doc:doc.id}, ...arr]);
+
+                db.collection("playlists").doc(auth.currentUser?.uid).update({
+                    arr: firebase.firestore.FieldValue.arrayUnion({name:name, doc:doc.id})
+                }).catch(err => {
+                    console.error("Failed to add playlist to user playlists");
+                    console.error(err);
+                })
+            }).catch(err => {
+                alert("There was an error createing your playlist!");
+                console.error(err);
             })
         }
     }
@@ -51,25 +81,23 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
         <div>
             <button onClick={CreatePlaylist}>Create Playlist</button>
             {playlists && <List
-                values={playlists}
-                onChange={({ oldIndex, newIndex }) =>
-                    {
-                        var temp = arrayMove(playlists, oldIndex, newIndex);
-
-                        setPlaylists(temp);
-                        
-                        //I don't like this. I am rewriting the whole array instead of changing the order.
-                        //TODO fix this
-                        db.collection("testbruh").doc(auth.currentUser?.uid).set({
-                            arr: temp
-                        })
-                    } 
-                }
-                renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-                renderItem={({ value, props }) => <li {...props}><EachPlaylist key={uuidv4()} data={value}/></li>}
-        /> }
+                    values={playlists}
+                    onChange={({ oldIndex, newIndex }) =>
+                        {
+                            var temp:any = arrayMove(playlists, oldIndex, newIndex);
+                            setPlaylists(temp);
+                            
+                            //I don't like this. I am rewriting the whole array instead of changing the order.
+                            //TODO fix this
+                            db.collection("playlists").doc(auth.currentUser?.uid).set({
+                                arr: temp
+                            })
+                        } 
+                    }
+                    renderList={({ children, props }) => <ul {...props}>{children}</ul>}
+                    renderItem={({ value, props }) => <li {...props}><EachPlaylist key={uuidv4()} data={value}/></li>}
+            /> }
         </div>
-        
     );
 }
 
