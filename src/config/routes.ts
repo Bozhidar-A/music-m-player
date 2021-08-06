@@ -8,6 +8,7 @@ import LogoutPage from "../pages/auth/logout";
 import RegisterPage from "../pages/auth/register";
 import ResetPasswordPage from "../pages/auth/reset";
 import HomePage from "../pages/home";
+import PlaylistPicker from "../pages/PlaylistPicker";
 
 const routes: IRoute[] = [
     {
@@ -66,13 +67,20 @@ const routes: IRoute[] = [
         name: 'Playlist',
         protected: true
     },
-    // {
-    //     path: '/:uid',
-    //     exact: false,
-    //     component: uidTest,
-    //     name: 'uidTest',
-    //     protected: true
-    // },
+    {
+        path: '/playlistpicker',
+        exact: true,
+        component: PlaylistPicker,
+        name: 'PlaylistPicker',
+        protected: true
+    },
+    {
+        path: '/playlist/:uid',
+        exact: false,
+        component: Playlist,
+        name: 'Playlist',
+        protected: true
+    },
     {
         path: '*',
         exact: true,
