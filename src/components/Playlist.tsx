@@ -1,19 +1,17 @@
+import firebase from 'firebase';
 import { useEffect, useRef, useState } from 'react';
 import { List, arrayMove } from 'react-movable';
 import ReactPlayer from 'react-player'
+import IPlaylist from '../interfaces/IPlaylist';
 import CORSProxyFetchChain from './CORSProxyFetchChain'
 
-function Playlist() {
+function Playlist(props:any) {
 
-  interface URLData {
-    url: string,
-    title: string
-  }
+  const [playlist, setPlaylist] = useState<IPlaylist[]>([])
 
-  const [URLPlaylist, setURLPlaylist] = useState<URLData[]>([]);
   const [inputURL, setInputURL] = useState<string>("");
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
-  const [reactPlayerPlaying, setReactPlayerPlaying] = useState(false);
+  const [reactPlayerPlaying, setReactPlayerPlaying] = useState(true);
   const [reactPlayerVolume, setReactPlayerVolume] = useState(0.5);
   const [reactPlayerSeek, setReactPlayerSeek] = useState(0);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
@@ -22,10 +20,18 @@ function Playlist() {
   const [titleUserInput, setTitleUserInput] = useState("");
   const reactPlayerRef = useRef<any>(null);
 
-  // useEffect(() => {
-  //   console.log(URLPlaylist.findIndex(e => e.url === currPlayingURL))
-  //   //playlist updated, console log the curr playing URL
-  // }, [URLPlaylist])
+  //firebase
+  var db = firebase.firestore()
+
+  useEffect(() => {
+    db.collection("playlistsData").doc(props.location.state.docID).get().then(doc => {
+      if(doc.exists)
+      {
+        setPlaylist(doc.data()!.songs)
+      }
+    }).catch(err => console.log(err))
+  }, [])
+
 
   //react-player
   function HandleOnError(error:any) {
@@ -69,18 +75,30 @@ function Playlist() {
     }
 
     //If the CORS title get failed add the url to the playlist with user specified title.
+    let titleToSet: string = "";
     if (titleCORSProxy !== "") {
-      setURLPlaylist(arr => [{ url: inputURL, title: titleCORSProxy }, ...arr]);
-      setInputURL("");
-      setTitleCORSProxy("");
-      setTitleUserInput("");
+      titleToSet = titleCORSProxy;
+      // setPlaylist(arr => [{ url: inputURL, title: titleCORSProxy }, ...arr]);
     }
     else {
-      setURLPlaylist(arr => [{ url: inputURL, title: titleUserInput }, ...arr]);
-      setInputURL("");
-      setTitleCORSProxy("");
-      setTitleUserInput("");
+      titleToSet = titleUserInput;
+      // setPlaylist(arr => [{ url: inputURL, title: titleUserInput }, ...arr]);
     }
+
+    setPlaylist(arr => [{ url: inputURL, title: titleToSet }, ...arr]);
+
+    setInputURL("");
+    setTitleCORSProxy("");
+    setTitleUserInput("");
+
+    //update db
+    db.collection("playlistsData").doc(props.location.state.docID).update({
+      songs:firebase.firestore.FieldValue.arrayUnion({ url: inputURL, title: titleToSet })
+    }).catch(() => {
+      console.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+    }).then(() => {
+      console.log(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+    })
   }
 
   /**
@@ -94,8 +112,8 @@ function Playlist() {
 
   function PlayNextURL()
   {
-    let currPlayingIndex = URLPlaylist.findIndex(e => e.url === currPlayingURL)
-    if(currPlayingIndex === URLPlaylist.length-1)
+    let currPlayingIndex = playlist.findIndex(e => e.url === currPlayingURL)
+    if(currPlayingIndex === playlist.length-1)
     {
       //reached end of playlist, stop
       setReactPlayerRender(false);
@@ -105,7 +123,7 @@ function Playlist() {
     {
       //play next URL
       currPlayingIndex++;
-      setCurrPlayingURL(URLPlaylist[currPlayingIndex].url);
+      setCurrPlayingURL(playlist[currPlayingIndex].url);
     }
   }
 
@@ -116,22 +134,22 @@ function Playlist() {
       <br></br>
       <p>Title</p>
       {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
-      <input value={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
+      <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
       <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
       <br></br>
       <div id="dnd">
-        <a>start dnd</a>
+        <p>start dnd</p>
         <List
-          values={URLPlaylist}
+          values={playlist}
           onChange={({ oldIndex, newIndex }) =>
-            setURLPlaylist(arrayMove(URLPlaylist, oldIndex, newIndex))
+          {console.log(playlist); setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
           }
           renderList={({ children, props }) => <ul {...props}>{children}</ul>}
           renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} <button onClick={() => PlayURL(value.url)}>Play</button></li>}
         />
-        <a>end dnd</a>
+        <p>end dnd</p>
         <br></br>
-        {reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()}></ReactPlayer>}
+        {reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}
         {reactPlayerRender && <footer>
           <p>Volume</p>
           <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>

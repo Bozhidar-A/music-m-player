@@ -18,7 +18,7 @@ const HomePage: React.FunctionComponent<IPageProps> = props => {
                         Click <Link to='/logout'>here</Link> to logout.
                     </p>
                     <p>
-                        Click <Link to='/playlist'>here</Link> to go to player.
+                        Click <Link to='/playlistpicker'>here</Link> to go to playlist picker.
                     </p>
                 </CardBody>
             </Card>

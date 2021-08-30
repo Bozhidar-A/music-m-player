@@ -5,7 +5,6 @@ import IPageProps from '../interfaces/page';
 import { List, arrayMove } from 'react-movable';
 import { auth } from '../config/firebase';
 import IAllPlaylists from '../interfaces/IAllPlaylists';
-import { v4 as uuidv4 } from 'uuid';
 
 
 const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
@@ -95,7 +94,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                         } 
                     }
                     renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-                    renderItem={({ value, props }) => <li {...props}><EachPlaylist key={uuidv4()} data={value}/></li>}
+                    renderItem={({ value, props }) => <li {...props}><EachPlaylist key={value.doc} data={value}/></li>}
             /> }
         </div>
     );
