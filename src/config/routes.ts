@@ -8,16 +8,23 @@ import LogoutPage from "../pages/auth/logout";
 import RegisterPage from "../pages/auth/register";
 import ResetPasswordPage from "../pages/auth/reset";
 import HomePage from "../pages/home";
-import PlaylistPicker from "../pages/PlaylistPicker";
+import PlaylistPicker from "../components/PlaylistPicker";
 
 const routes: IRoute[] = [
     {
         path: '/',
         exact: true,
-        component: HomePage,
-        name: 'Home Page',
+        component: PlaylistPicker,
+        name: 'Playlist Picker',
         protected: true
     },
+    // {
+    //     path: '/playlistpicker',
+    //     exact: true,
+    //     component: PlaylistPicker,
+    //     name: 'PlaylistPicker',
+    //     protected: true
+    // },
     {
         path: '/register',
         exact: true,
@@ -65,13 +72,6 @@ const routes: IRoute[] = [
         exact: true,
         component: Playlist,
         name: 'Playlist',
-        protected: true
-    },
-    {
-        path: '/playlistpicker',
-        exact: true,
-        component: PlaylistPicker,
-        name: 'PlaylistPicker',
         protected: true
     },
     {

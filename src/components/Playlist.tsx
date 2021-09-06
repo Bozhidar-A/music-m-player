@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { List, arrayMove } from 'react-movable';
 import ReactPlayer from 'react-player'
 import IPlaylist from '../interfaces/IPlaylist';
-import CORSProxyFetchChain from './CORSProxyFetchChain'
+import CORSProxyFetchChain from './CORSProxyFetchChain';
 
 function Playlist(props:any) {
 
@@ -105,25 +105,53 @@ function Playlist(props:any) {
  * Makes the selected URL the currPlayingURL and makes the player render.
  */
   function PlayURL(url:string) {
-    console.log(url)
+    console.log(`Playing url - ${url}`)
     setCurrPlayingURL(url);
     setReactPlayerRender(true);
   }
 
+  function StopPlayingURL()
+  {
+    //reached end of playlist, stop
+    setReactPlayerRender(false);
+    setCurrPlayingURL("");
+  }
+
+  function GetPlayingIndex()
+  {
+    return playlist.findIndex(e => e.url === currPlayingURL);
+  }
+
   function PlayNextURL()
   {
-    let currPlayingIndex = playlist.findIndex(e => e.url === currPlayingURL)
-    if(currPlayingIndex === playlist.length-1)
+    let i = GetPlayingIndex();
+    i++;
+    
+    if(i >= playlist.length)
     {
-      //reached end of playlist, stop
-      setReactPlayerRender(false);
-      setCurrPlayingURL("");
+      StopPlayingURL()
     }
     else
     {
       //play next URL
-      currPlayingIndex++;
-      setCurrPlayingURL(playlist[currPlayingIndex].url);
+      setCurrPlayingURL(playlist[i].url);
+    }
+
+  }
+
+  function PlayPrevURL()
+  {
+    let i = GetPlayingIndex();
+    i--;
+    
+    if(i <= -1)
+    {
+      StopPlayingURL()
+    }
+    else
+    {
+      //play prev URL
+      setCurrPlayingURL(playlist[i].url);
     }
   }
 
@@ -149,13 +177,15 @@ function Playlist(props:any) {
         />
         <p>end dnd</p>
         <br></br>
-        {reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}
+        <div className="reactplayer">{reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}</div>
         {reactPlayerRender && <footer>
           <p>Volume</p>
           <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
           <p>Seek</p>
           <input type="range" min="0" max="1" step="any" value={reactPlayerSeek} onChange={(e) => HandleSeek(e.target.value)}/>
-          <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)}>Play/Pause</button>
+          <button onClick={() => PlayPrevURL()}>Prev</button>
+          <button onClick={() => PlayNextURL()}>Next</button>
+          <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
         </footer>}
       </div>
     </div>
