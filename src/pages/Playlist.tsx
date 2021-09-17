@@ -5,6 +5,7 @@ import ReactPlayer from 'react-player'
 import IPlaylist from '../interfaces/IPlaylist';
 import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
 import ProfileDropdown from '../components/ProfileDropdown';
+import "../styles/Playlist.css"
 
 function Playlist(props:any) {
 
@@ -14,7 +15,8 @@ function Playlist(props:any) {
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
   const [reactPlayerPlaying, setReactPlayerPlaying] = useState(true);
   const [reactPlayerVolume, setReactPlayerVolume] = useState(0.5);
-  const [reactPlayerSeek, setReactPlayerSeek] = useState(0);
+  const [reactPlayerDuration, setReactPlayerDuration] = useState(0);
+  const [reactPlayerProgress, setReactPlayerProgress] = useState(0);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
   const [titleCORSProxy, setTitleCORSProxy] = useState("");
   const [CORSProxStatus, setCORSProxStatus] = useState("");
@@ -41,7 +43,7 @@ function Playlist(props:any) {
 
   function HandleSeek(seekToVal: string)
   {
-    setReactPlayerSeek(parseFloat(seekToVal)); 
+    setReactPlayerProgress(parseInt(seekToVal)); 
     reactPlayerRef.current.seekTo(seekToVal);
   }
   
@@ -156,6 +158,19 @@ function Playlist(props:any) {
     }
   }
 
+  function FormatTime(seconds:number)
+  {
+    //if less then an hour display MM:SS
+    if(seconds < 3600)
+    {
+      return new Date(seconds * 1000).toISOString().substr(14, 5)
+    }
+    else//else display HH:MM:SS
+    {
+      return new Date(seconds * 1000).toISOString().substr(11, 8);
+    }
+  }
+
   return (
     <div>
       <ProfileDropdown></ProfileDropdown>
@@ -180,12 +195,22 @@ function Playlist(props:any) {
           />
           <p>end dnd</p>
           <br></br>
-          <div className="reactplayer">{reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}</div>
+          <div className="hidden">{reactPlayerRender && <ReactPlayer 
+            ref={reactPlayerRef} 
+            url={currPlayingURL} 
+            volume={reactPlayerVolume} 
+            onError={(e) => { HandleOnError(e) }} 
+            controls={true} playing={reactPlayerPlaying} 
+            onEnded={() => PlayNextURL()} 
+            onProgress={(e) => setReactPlayerProgress(Math.floor(e.playedSeconds))} 
+            onDuration={(e) => setReactPlayerDuration(e)}></ReactPlayer>}
+          </div>
           {reactPlayerRender && <footer>
             <p>Volume</p>
             <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
             <p>Seek</p>
-            <input type="range" min="0" max="1" step="any" value={reactPlayerSeek} onChange={(e) => HandleSeek(e.target.value)}/>
+            <input type="range" min="0" max={reactPlayerDuration} step="any" value={reactPlayerProgress} onChange={(e) => HandleSeek(e.target.value)}/>
+            <p>{FormatTime(reactPlayerProgress)}/{FormatTime(reactPlayerDuration)}</p>
             <button onClick={() => PlayPrevURL()}>Prev</button>
             <button onClick={() => PlayNextURL()}>Next</button>
             <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
