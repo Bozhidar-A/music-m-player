@@ -5,6 +5,7 @@ import IPageProps from '../interfaces/page';
 import { List, arrayMove } from 'react-movable';
 import { auth } from '../config/firebase';
 import IAllPlaylists from '../interfaces/IAllPlaylists';
+import ProfileDropdown from '../components/ProfileDropdown';
 
 
 const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
@@ -78,6 +79,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
 
     return (
         <div>
+            <ProfileDropdown></ProfileDropdown>
             <button onClick={CreatePlaylist}>Create Playlist</button>
             {playlists && <List
                     values={playlists}

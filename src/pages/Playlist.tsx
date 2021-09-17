@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { List, arrayMove } from 'react-movable';
 import ReactPlayer from 'react-player'
 import IPlaylist from '../interfaces/IPlaylist';
-import CORSProxyFetchChain from './CORSProxyFetchChain';
+import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
+import ProfileDropdown from '../components/ProfileDropdown';
 
 function Playlist(props:any) {
 
@@ -156,37 +157,40 @@ function Playlist(props:any) {
   }
 
   return (
-    <div id="Player">
-      <p>URL</p>
-      <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
-      <br></br>
-      <p>Title</p>
-      {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
-      <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
-      <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
-      <br></br>
-      <div id="dnd">
-        <p>start dnd</p>
-        <List
-          values={playlist}
-          onChange={({ oldIndex, newIndex }) =>
-          {console.log(playlist); setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
-          }
-          renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-          renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} <button onClick={() => PlayURL(value.url)}>Play</button></li>}
-        />
-        <p>end dnd</p>
+    <div>
+      <ProfileDropdown></ProfileDropdown>
+      <div id="Player">
+        <p>URL</p>
+        <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
         <br></br>
-        <div className="reactplayer">{reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}</div>
-        {reactPlayerRender && <footer>
-          <p>Volume</p>
-          <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
-          <p>Seek</p>
-          <input type="range" min="0" max="1" step="any" value={reactPlayerSeek} onChange={(e) => HandleSeek(e.target.value)}/>
-          <button onClick={() => PlayPrevURL()}>Prev</button>
-          <button onClick={() => PlayNextURL()}>Next</button>
-          <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
-        </footer>}
+        <p>Title</p>
+        {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
+        <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
+        <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
+        <br></br>
+        <div id="dnd">
+          <p>start dnd</p>
+          <List
+            values={playlist}
+            onChange={({ oldIndex, newIndex }) =>
+            {console.log(playlist); setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
+            }
+            renderList={({ children, props }) => <ul {...props}>{children}</ul>}
+            renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} <button onClick={() => PlayURL(value.url)}>Play</button></li>}
+          />
+          <p>end dnd</p>
+          <br></br>
+          <div className="reactplayer">{reactPlayerRender && <ReactPlayer ref={reactPlayerRef} url={currPlayingURL} volume={reactPlayerVolume} onError={(e) => { HandleOnError(e) }} controls={true} playing={reactPlayerPlaying} onEnded={() => PlayNextURL()} onProgress={(e) => setReactPlayerSeek(e.played)}></ReactPlayer>}</div>
+          {reactPlayerRender && <footer>
+            <p>Volume</p>
+            <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
+            <p>Seek</p>
+            <input type="range" min="0" max="1" step="any" value={reactPlayerSeek} onChange={(e) => HandleSeek(e.target.value)}/>
+            <button onClick={() => PlayPrevURL()}>Prev</button>
+            <button onClick={() => PlayNextURL()}>Next</button>
+            <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
+          </footer>}
+        </div>
       </div>
     </div>
   );

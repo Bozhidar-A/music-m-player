@@ -1,5 +1,5 @@
-import FourOFour from "../components/FourOFour";
-import Playlist from "../components/Playlist";
+import FourOFour from "../pages/FourOFour";
+import Playlist from "../pages/Playlist";
 import IRoute from "../interfaces/route";
 import ChangePasswordPage from "../pages/auth/change";
 import ForgotPasswordPage from "../pages/auth/forgot";
@@ -8,7 +8,7 @@ import LogoutPage from "../pages/auth/logout";
 import RegisterPage from "../pages/auth/register";
 import ResetPasswordPage from "../pages/auth/reset";
 import HomePage from "../pages/home";
-import PlaylistPicker from "../components/PlaylistPicker";
+import PlaylistPicker from "../pages/PlaylistPicker";
 
 const routes: IRoute[] = [
     {
