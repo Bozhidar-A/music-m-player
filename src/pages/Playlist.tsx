@@ -211,8 +211,8 @@ function Playlist(props:any) {
             <p>Seek</p>
             <input type="range" min="0" max={reactPlayerDuration} step="any" value={reactPlayerProgress} onChange={(e) => HandleSeek(e.target.value)}/>
             <p>{FormatTime(reactPlayerProgress)}/{FormatTime(reactPlayerDuration)}</p>
-            <button onClick={() => PlayPrevURL()}>Prev</button>
-            <button onClick={() => PlayNextURL()}>Next</button>
+            <button onClick={() => PlayPrevURL()} disabled={GetPlayingIndex() == 0 ? true : false}>Prev</button>
+            <button onClick={() => PlayNextURL()} disabled={GetPlayingIndex() == playlist.length - 1 ? true : false}>Next</button>
             <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
           </footer>}
         </div>
