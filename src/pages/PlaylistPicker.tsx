@@ -19,14 +19,22 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
             {
                 setPlaylists(doc.data()!.arr)
             }
+            else
+            {
+                doc.ref.set({arr:playlists}).then(() => console.log("Array of playlists didn't exist. Created."));
+            }
         }).catch(err => console.log(err))
     }, [])
+
+    useEffect(() => {
+        console.log(playlists)
+    },[playlists]) 
 
     function EachPlaylist(props:any)
     {
         return(<div>
             <p>{props.data.name}</p>
-            <Link to={{pathname:`/playlist/${props.data.doc}`, state: { docID: props.data.doc} }}>View Playlist</Link>
+            <Link to={{pathname:`/playlist/${props.data.docID}`, state: { docID: props.data.docID} }}>View Playlist</Link>
             <button onClick={() => DeletePlaylist(props.data)}>DeletePlaylist</button>
         </div>)
     }
@@ -65,11 +73,12 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                 setPlaylists(arr => [{name:name!, docID:doc.id}, ...arr]);
 
                 db.collection("playlists").doc(auth.currentUser?.uid).update({
-                    arr: firebase.firestore.FieldValue.arrayUnion({name:name, doc:doc.id})
+                    arr: firebase.firestore.FieldValue.arrayUnion({name:name, docID:doc.id})
                 }).catch(err => {
                     console.error("Failed to add playlist to user playlists");
                     console.error(err);
                 })
+
             }).catch(err => {
                 alert("There was an error createing your playlist!");
                 console.error(err);
