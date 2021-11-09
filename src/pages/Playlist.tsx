@@ -2,14 +2,14 @@ import firebase from 'firebase';
 import { useEffect, useRef, useState } from 'react';
 import { List, arrayMove } from 'react-movable';
 import ReactPlayer from 'react-player'
-import IPlaylist from '../interfaces/IPlaylist';
+import IPlaylistItem from '../interfaces/IPlaylistItem';
 import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
 import ProfileDropdown from '../components/ProfileDropdown';
 import "../styles/Playlist.css"
 
 function Playlist(props:any) {
 
-  const [playlist, setPlaylist] = useState<IPlaylist[]>([])
+  const [playlist, setPlaylist] = useState<IPlaylistItem[]>([])
 
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
   const [reactPlayerPlaying, setReactPlayerPlaying] = useState(true);
@@ -17,6 +17,8 @@ function Playlist(props:any) {
   const [reactPlayerDuration, setReactPlayerDuration] = useState(0);
   const [reactPlayerProgress, setReactPlayerProgress] = useState(0);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
+  const [elementToUpdate, setElementToUpdate] = useState<IPlaylistItem>();
+  const [action, setAction] = useState<string|null>(null);
   const reactPlayerRef = useRef<any>(null);
 
   //firebase
@@ -31,6 +33,18 @@ function Playlist(props:any) {
     }).catch(err => console.log(err))
   }, [])
 
+  function HandleAction()
+  {
+    switch (action) {
+      case "new":
+        return <AddSongDialog></AddSongDialog>
+      case "update":
+          return <UpdateSongDialog elementToUpdate={elementToUpdate!}></UpdateSongDialog>
+      default:
+        return <button onClick={() => setAction("new")}>Add new song</button>;
+    }
+  }
+
 
   //react-player
   function HandleOnError(error:any) {
@@ -42,16 +56,6 @@ function Playlist(props:any) {
     setReactPlayerProgress(parseInt(seekToVal)); 
     reactPlayerRef.current.seekTo(seekToVal);
   }
-  
-  /**
- * Attempts to get the title using CORSProxyFetchChain. On fail make it an empty string, user inputs it.
- */
-
-
-  /**
- * Adds the title to the playlist
- */
-
 
   function AddSongDialog()
   {
@@ -59,7 +63,11 @@ function Playlist(props:any) {
     const [titleCORSProxy, setTitleCORSProxy] = useState("");
     const [CORSProxStatus, setCORSProxStatus] = useState("");
     const [titleUserInput, setTitleUserInput] = useState("");
+    
 
+    /**
+    * Attempts to get the title using CORSProxyFetchChain. On fail make it an empty string, user inputs it.
+    */
     function AttempGetURL(url:string) {
       console.log(url)
       setInputURL(url)
@@ -76,10 +84,14 @@ function Playlist(props:any) {
       });
     }
 
+    
+    /**
+    * Adds the title to the playlist
+    */
     function AddToPlaylist() {
 
       //React player plays the urls. If it can't play it, don't add it
-      if (!ReactPlayer.canPlay(inputURL) || GetSongByURL(inputURL) === -1) {
+      if (!ReactPlayer.canPlay(inputURL) || GetSongByURL(inputURL) != -1) {
         alert("can't play")
         return
       }
@@ -118,9 +130,47 @@ function Playlist(props:any) {
         <p>Title</p>
         {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
         <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
-        <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
+        <button type="button" onClick={() => {AddToPlaylist(); setAction(null)}} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
+        <button type="button" onClick={() => setAction(null)}>Cancel</button>
         <br></br>
     </>)
+  }
+
+  function UpdateSongDialog({elementToUpdate}:{elementToUpdate:IPlaylistItem})
+  {
+    const [updatedURL, setUpdatedURL] = useState(elementToUpdate?.url);
+    const [updatedTitle, setUpdatedTitle] = useState(elementToUpdate?.title);
+
+    if(elementToUpdate === undefined)
+    {
+      return(<p>Something has gone terrbly worng. Please refresh the page.</p>)
+    }
+
+    function UpdateSong()
+    {
+      var tmp = playlist;
+      tmp[GetSongByURL(elementToUpdate!.url)] = {url:updatedURL!,title:updatedTitle!};
+      setPlaylist(arr => [...tmp]);
+
+      db.collection("playlistsData").doc(props.location.state.docID).update({
+        songs:tmp
+      }).catch(() => {
+        console.error(`Failed to update playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+      }).then(() => {
+        console.log(`Updated playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+      })
+    }
+
+    return(<>
+      <p>URL</p>
+      <input value={updatedURL} onChange={(e) => setUpdatedURL(e.target.value)} ></input>
+      <br></br>
+      <p>Title</p>
+      <input defaultValue={updatedTitle} onChange={(e) => setUpdatedTitle(e.target.value)}></input>
+      <button type="button" onClick={() => {UpdateSong(); setAction(null)}}>Update</button>
+      <button type="button" onClick={() => setAction(null)}>Cancel</button>
+      <br></br>
+  </>)
   }
 
   /**
@@ -199,7 +249,11 @@ function Playlist(props:any) {
     <div>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
-        <AddSongDialog></AddSongDialog>
+        {/* <AddSongDialog></AddSongDialog> */}
+        <div id="action">
+          <HandleAction></HandleAction>
+        </div>
+        
         <div id="dnd">
           <p>start dnd</p>
           <List
@@ -208,7 +262,10 @@ function Playlist(props:any) {
             {console.log(playlist); setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
             }
             renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-            renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} <button onClick={() => PlayURL(value.url)}>Play</button></li>}
+            renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} 
+            <button onClick={() => PlayURL(value.url)}>Play</button> 
+            <button onClick={() => {setElementToUpdate(value); setAction("update")}}>Update</button>
+            </li>}
           />
           <p>end dnd</p>
           <br></br>
