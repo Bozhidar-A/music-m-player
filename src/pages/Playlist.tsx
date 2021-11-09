@@ -11,16 +11,12 @@ function Playlist(props:any) {
 
   const [playlist, setPlaylist] = useState<IPlaylist[]>([])
 
-  const [inputURL, setInputURL] = useState<string>("");
   const [reactPlayerRender, setReactPlayerRender] = useState(false);
   const [reactPlayerPlaying, setReactPlayerPlaying] = useState(true);
   const [reactPlayerVolume, setReactPlayerVolume] = useState(0.5);
   const [reactPlayerDuration, setReactPlayerDuration] = useState(0);
   const [reactPlayerProgress, setReactPlayerProgress] = useState(0);
   const [currPlayingURL, setCurrPlayingURL] = useState("");
-  const [titleCORSProxy, setTitleCORSProxy] = useState("");
-  const [CORSProxStatus, setCORSProxStatus] = useState("");
-  const [titleUserInput, setTitleUserInput] = useState("");
   const reactPlayerRef = useRef<any>(null);
 
   //firebase
@@ -50,58 +46,81 @@ function Playlist(props:any) {
   /**
  * Attempts to get the title using CORSProxyFetchChain. On fail make it an empty string, user inputs it.
  */
-  function AttempGetURL(url:string) {
-    console.log(url)
-    setInputURL(url)
-    setCORSProxStatus("");
-    CORSProxyFetchChain(url).then(function (result:any) {
-      console.log(result)
-      if (result === "ALL_FAILED") {
-        setTitleCORSProxy("");
-        setCORSProxStatus("ALL_FAILED");
-      }
-      else {
-        setTitleCORSProxy(result);
-      }
-    });
-  }
+
 
   /**
  * Adds the title to the playlist
  */
-  function AddToPlaylist() {
 
-    //React player plays the urls. If it can't play it, don't add it
-    if (!ReactPlayer.canPlay(inputURL)) {
-      alert("can't play")
-      return
+
+  function AddSongDialog()
+  {
+    const [inputURL, setInputURL] = useState<string>("");
+    const [titleCORSProxy, setTitleCORSProxy] = useState("");
+    const [CORSProxStatus, setCORSProxStatus] = useState("");
+    const [titleUserInput, setTitleUserInput] = useState("");
+
+    function AttempGetURL(url:string) {
+      console.log(url)
+      setInputURL(url)
+      setCORSProxStatus("");
+      CORSProxyFetchChain(url).then(function (result:any) {
+        console.log(result)
+        if (result === "ALL_FAILED") {
+          setTitleCORSProxy("");
+          setCORSProxStatus("ALL_FAILED");
+        }
+        else {
+          setTitleCORSProxy(result);
+        }
+      });
     }
 
-    //If the CORS title get failed add the url to the playlist with user specified title.
-    let titleToSet: string = "";
-    if (titleCORSProxy !== "") {
-      titleToSet = titleCORSProxy;
-      // setPlaylist(arr => [{ url: inputURL, title: titleCORSProxy }, ...arr]);
+    function AddToPlaylist() {
+
+      //React player plays the urls. If it can't play it, don't add it
+      if (!ReactPlayer.canPlay(inputURL) || GetSongByURL(inputURL) === -1) {
+        alert("can't play")
+        return
+      }
+  
+      //If the CORS title get failed add the url to the playlist with user specified title.
+      let titleToSet: string = "";
+      if (titleCORSProxy !== "" && titleUserInput === "") {
+        titleToSet = titleCORSProxy;
+        // setPlaylist(arr => [{ url: inputURL, title: titleCORSProxy }, ...arr]);
+      }
+      else {
+        titleToSet = titleUserInput;
+        // setPlaylist(arr => [{ url: inputURL, title: titleUserInput }, ...arr]);
+      }
+  
+      setPlaylist(arr => [{ url: inputURL, title: titleToSet }, ...arr]);
+  
+      setInputURL("");
+      setTitleCORSProxy("");
+      setTitleUserInput("");
+  
+      //update db
+      db.collection("playlistsData").doc(props.location.state.docID).update({
+        songs:firebase.firestore.FieldValue.arrayUnion({ url: inputURL, title: titleToSet })
+      }).catch(() => {
+        console.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+      }).then(() => {
+        console.log(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+      })
     }
-    else {
-      titleToSet = titleUserInput;
-      // setPlaylist(arr => [{ url: inputURL, title: titleUserInput }, ...arr]);
-    }
 
-    setPlaylist(arr => [{ url: inputURL, title: titleToSet }, ...arr]);
-
-    setInputURL("");
-    setTitleCORSProxy("");
-    setTitleUserInput("");
-
-    //update db
-    db.collection("playlistsData").doc(props.location.state.docID).update({
-      songs:firebase.firestore.FieldValue.arrayUnion({ url: inputURL, title: titleToSet })
-    }).catch(() => {
-      console.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
-    }).then(() => {
-      console.log(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
-    })
+    return(<>
+        <p>URL</p>
+        <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
+        <br></br>
+        <p>Title</p>
+        {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
+        <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
+        <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
+        <br></br>
+    </>)
   }
 
   /**
@@ -123,6 +142,11 @@ function Playlist(props:any) {
   function GetPlayingIndex()
   {
     return playlist.findIndex(e => e.url === currPlayingURL);
+  }
+
+  function GetSongByURL(url:string)
+  {
+    return playlist.findIndex(e => e.url === url);
   }
 
   function PlayNextURL()
@@ -175,14 +199,7 @@ function Playlist(props:any) {
     <div>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
-        <p>URL</p>
-        <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
-        <br></br>
-        <p>Title</p>
-        {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
-        <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
-        <button type="button" onClick={AddToPlaylist} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
-        <br></br>
+        <AddSongDialog></AddSongDialog>
         <div id="dnd">
           <p>start dnd</p>
           <List
