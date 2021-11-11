@@ -40,7 +40,9 @@ const ChangePasswordPage: React.FunctionComponent<IPageProps> = props => {
     }
 
     if (auth.currentUser?.providerData[0]?.providerId !== 'password')
+    {
         return <Redirect to="/" />;
+    }
 
     return (
         <AuthContainer header="Change Password">

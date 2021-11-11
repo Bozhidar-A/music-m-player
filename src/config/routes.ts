@@ -14,17 +14,17 @@ const routes: IRoute[] = [
     {
         path: '/',
         exact: true,
+        component: HomePage,
+        name: 'HomePage',
+        protected: false
+    },
+    {
+        path: '/playlistpicker',
+        exact: true,
         component: PlaylistPicker,
-        name: 'Playlist Picker',
+        name: 'PlaylistPicker',
         protected: true
     },
-    // {
-    //     path: '/playlistpicker',
-    //     exact: true,
-    //     component: PlaylistPicker,
-    //     name: 'PlaylistPicker',
-    //     protected: true
-    // },
     {
         path: '/register',
         exact: true,
