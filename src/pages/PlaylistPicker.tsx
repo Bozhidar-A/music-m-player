@@ -6,6 +6,7 @@ import { List, arrayMove } from 'react-movable';
 import { auth } from '../config/firebase';
 import IAllPlaylists from '../interfaces/IAllPlaylists';
 import ProfileDropdown from '../components/ProfileDropdown';
+import logging from '../config/logging';
 
 
 const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
@@ -21,13 +22,13 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
             }
             else
             {
-                doc.ref.set({arr:playlists}).then(() => console.log("Array of playlists didn't exist. Created."));
+                doc.ref.set({arr:playlists}).then(() => logging.info("Array of playlists didn't exist. Created."));
             }
-        }).catch(err => console.log(err))
+        }).catch(err => logging.error(err))
     }, [])
 
     useEffect(() => {
-        console.log(playlists)
+        logging.info(playlists)
     },[playlists]) 
 
     function EachPlaylist(props:any)
@@ -52,12 +53,12 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
 
                 //firebase update
                 db.collection("playlistsData").doc(obj.doc).delete().catch(err => {
-                    console.error("Failed to delete playlistsData doc on playlist delete")
-                    console.error(err)
+                    logging.error("Failed to delete playlistsData doc on playlist delete")
+                    logging.error(err)
                 })
             }).catch(err => {
                 alert("Failed to delete playlist!");
-                console.error(err);
+                logging.error(err);
             })
         }
     }
@@ -75,13 +76,13 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                 db.collection("playlists").doc(auth.currentUser?.uid).update({
                     arr: firebase.firestore.FieldValue.arrayUnion({name:name, docID:doc.id})
                 }).catch(err => {
-                    console.error("Failed to add playlist to user playlists");
-                    console.error(err);
+                    logging.error("Failed to add playlist to user playlists");
+                    logging.error(err);
                 })
 
             }).catch(err => {
                 alert("There was an error createing your playlist!");
-                console.error(err);
+                logging.error(err);
             })
         }
     }

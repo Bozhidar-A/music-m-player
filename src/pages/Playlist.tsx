@@ -6,6 +6,7 @@ import IPlaylistItem from '../interfaces/IPlaylistItem';
 import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
 import ProfileDropdown from '../components/ProfileDropdown';
 import "../styles/Playlist.css"
+import logging from '../config/logging';
 
 function Playlist(props:any) {
 
@@ -31,7 +32,7 @@ function Playlist(props:any) {
       {
         setPlaylist(doc.data()!.songs)
       }
-    }).catch(err => console.log(err))
+    }).catch(err => logging.error(err))
   }, [])
 
   function HandleAction()
@@ -49,7 +50,7 @@ function Playlist(props:any) {
 
   //react-player
   function HandleOnError(error:any) {
-    console.log(error)
+    logging.error(error)
   }
 
   function HandleSeek(seekToVal: string)
@@ -70,11 +71,11 @@ function Playlist(props:any) {
     * Attempts to get the title using CORSProxyFetchChain. On fail make it an empty string, user inputs it.
     */
     function AttempGetURL(url:string) {
-      console.log(url)
+      logging.info(url)
       setInputURL(url)
       setCORSProxStatus("");
       CORSProxyFetchChain(url).then(function (result:any) {
-        console.log(result)
+        logging.info(result)
         if (result === "ALL_FAILED") {
           setTitleCORSProxy("");
           setCORSProxStatus("ALL_FAILED");
@@ -118,9 +119,9 @@ function Playlist(props:any) {
       db.collection("playlistsData").doc(props.location.state.docID).update({
         songs:firebase.firestore.FieldValue.arrayUnion({ url: inputURL, title: titleToSet })
       }).catch(() => {
-        console.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+        logging.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
       }).then(() => {
-        console.log(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+        logging.info(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
       })
     }
 
@@ -129,7 +130,7 @@ function Playlist(props:any) {
         <input value={inputURL} onChange={(e) => AttempGetURL(e.target.value)} ></input>
         <br></br>
         <p>Title</p>
-        {inputURL === "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
+        {inputURL === "" || titleCORSProxy !== "" ? null : (inputURL !== "" && CORSProxStatus !== "ALL_FAILED" ? <p>Trying to resolve title...</p> : <p>We failed to resolve the title.</p>)}
         <input defaultValue={titleUserInput} onChange={(e) => setTitleUserInput(e.target.value)} placeholder={titleCORSProxy}></input>
         <button type="button" onClick={() => {AddToPlaylist(); setAction(null)}} disabled={(titleUserInput || titleCORSProxy) === "" ? true : false}>Add to playlist</button>
         <button type="button" onClick={() => setAction(null)}>Cancel</button>
@@ -156,9 +157,9 @@ function Playlist(props:any) {
       db.collection("playlistsData").doc(props.location.state.docID).update({
         songs:tmp
       }).catch(() => {
-        console.error(`Failed to update playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+        logging.error(`Failed to update playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
       }).then(() => {
-        console.log(`Updated playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+        logging.info(`Updated playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
       })
     }
 
@@ -178,7 +179,7 @@ function Playlist(props:any) {
  * Makes the selected URL the currPlayingURL and makes the player render.
  */
   function PlayURL(url:string) {
-    console.log(`Playing url - ${url}`)
+    logging.info(`Playing url - ${url}`)
     setCurrPlayingURL(url);
     setReactPlayerRender(true);
   }
@@ -262,7 +263,7 @@ function Playlist(props:any) {
           <List
             values={playlist}
             onChange={({ oldIndex, newIndex }) =>
-            {console.log(playlist); setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
+            {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
             }
             renderList={({ children, props }) => <ul {...props}>{children}</ul>}
             renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} 
