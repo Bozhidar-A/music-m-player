@@ -236,6 +236,24 @@ function Playlist(props:any) {
     }
   }
 
+  function DeleteSong(song:IPlaylistItem)
+  {
+    if(window.confirm(`Are you sure you want to delete the song - ${song.title}`))
+    {
+      var tmp = playlist;
+      tmp.splice(GetSongByURL(song.url), 1)
+      setPlaylist(arr => [...tmp]);
+
+      db.collection("playlistsData").doc(props.location.state.docID).update({
+        songs:tmp
+      }).catch(() => {
+        logging.error(`Failed to update playlist ${props.location.state.docID} with deleteion of song url - ${song.url} and title - ${song.title}`)
+      }).then(() => {
+        logging.info(`Updated playlist ${props.location.state.docID} with deleteion of song url - ${song.url} and title - ${song.title}`)
+      })
+    }
+  }
+
   function FormatTime(seconds:number)
   {
     //if less then an hour display MM:SS
@@ -269,6 +287,7 @@ function Playlist(props:any) {
             renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} 
             <button onClick={() => PlayURL(value.url)}>Play</button> 
             <button onClick={() => {setElementToUpdate(value); setAction("update")}}>Update</button>
+            <button onClick={() => {DeleteSong(value)}}>Delete</button>
             </li>}
           />
           <p>end dnd</p>
