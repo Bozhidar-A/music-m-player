@@ -7,6 +7,7 @@ import { auth } from '../config/firebase';
 import IAllPlaylists from '../interfaces/IAllPlaylists';
 import ProfileDropdown from '../components/ProfileDropdown';
 import logging from '../config/logging';
+import styles from "../styles/Components.module.css"
 
 
 const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
@@ -88,7 +89,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
     }
 
     return (
-        <div>
+        <div className={styles.PlaylistPicker}>
             <ProfileDropdown></ProfileDropdown>
             <button onClick={CreatePlaylist}>Create Playlist</button>
             {playlists && <List

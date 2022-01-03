@@ -1,0 +1,72 @@
+.hidden {
+  display: none;
+}
+
+.PlaylistPicker {
+  text-align: center;
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.MainActionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-bottom: 10px;
+}
+
+.MainDivFlex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  background-color: #282c34;
+  color: white;
+  height: 100vh;
+}
+
+.MainDivFlex > *:first-child {
+  align-self: flex-end;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-bottom: 20px;
+}
+
+.PlaylistFooter {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+}
+
+.AddBtn {
+  background-color: #4caf50; /* Green */
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  width: 100%;
+}
+
+.AddBtnBlack {
+  background-color: white;
+  color: black;
+  border: 2px solid #555555;
+}
+
+.AddBtnBlack:hover {
+  background-color: #555555;
+  color: white;
+}

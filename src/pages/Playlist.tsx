@@ -5,7 +5,7 @@ import ReactPlayer from 'react-player'
 import IPlaylistItem from '../interfaces/IPlaylistItem';
 import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
 import ProfileDropdown from '../components/ProfileDropdown';
-import "../styles/Playlist.css"
+import styles from "../styles/Components.module.css"
 import logging from '../config/logging';
 
 function Playlist(props:any) {
@@ -43,7 +43,7 @@ function Playlist(props:any) {
       case "update":
           return <UpdateSongDialog elementToUpdate={elementToUpdate!}></UpdateSongDialog>
       default:
-        return <button onClick={() => setAction("new")}>Add new song</button>;
+        return <button onClick={() => setAction("new")} className={`${styles.AddBtn} ${styles.AddBtnBlack}`}>Add new song</button>;
     }
   }
 
@@ -268,16 +268,16 @@ function Playlist(props:any) {
   }
 
   return (
-    <div>
+    <div className={styles.MainDivFlex}>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
         {/* <AddSongDialog></AddSongDialog> */}
-        <div id="action">
+        <div id="action" className={styles.MainActionBtn}>
           <HandleAction></HandleAction>
         </div>
         
         <div id="dnd">
-          <p>start dnd</p>
+          {/* <p>start dnd</p> */}
           <List
             values={playlist}
             onChange={({ oldIndex, newIndex }) =>
@@ -290,7 +290,7 @@ function Playlist(props:any) {
             <button onClick={() => {DeleteSong(value)}}>Delete</button>
             </li>}
           />
-          <p>end dnd</p>
+          {/* <p>end dnd</p> */}
           <br></br>
           <div className={showReactPlayer ? "block" : "hidden"} id="ReactPlayer">{reactPlayerRender && <ReactPlayer 
             ref={reactPlayerRef} 
@@ -302,7 +302,7 @@ function Playlist(props:any) {
             onProgress={(e) => setReactPlayerProgress(Math.floor(e.playedSeconds))} 
             onDuration={(e) => setReactPlayerDuration(e)}></ReactPlayer>}
           </div>
-          {reactPlayerRender && <footer id="controls">
+          {reactPlayerRender && <footer id="controls" className={styles.PlaylistFooter}>
             <p>Volume</p>
             <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
             <p>Seek</p>
