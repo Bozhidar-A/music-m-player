@@ -300,7 +300,17 @@ function Playlist(props:any) {
           <List
               values={playlist}
               onChange={({ oldIndex, newIndex }) =>
-              {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
+                {
+                  var temp:any = arrayMove(playlist, oldIndex, newIndex);
+                  setPlaylist(temp);
+                  
+                  //I don't like this. I am rewriting the whole array instead of changing the order.
+                  //TODO fix this
+                  db.collection("playlistsData").doc(props.location.state.docID).set({
+                    songs: temp
+                  }).catch(e => logging.error(e))
+                } 
+              // {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
               }
               renderList={({ children, props }) => <ul {...props}>{children}</ul>}
               renderItem={({ value, props }) => <li {...props}>{value.title}
