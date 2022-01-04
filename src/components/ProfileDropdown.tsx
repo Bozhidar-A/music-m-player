@@ -14,7 +14,6 @@ function ProfileDropdown()
 
     function ToggleDropdown()
     {
-        console.log(dropdownOpen)
         setDropdownOpen(!dropdownOpen);
     }
 

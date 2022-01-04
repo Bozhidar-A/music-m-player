@@ -34,9 +34,9 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
 
     function EachPlaylist(props:any)
     {
-        return(<div>
+        return(<div className={styles.PlaylistPickerEach}>
             <p>{props.data.name}</p>
-            <Link to={{pathname:`/playlist/${props.data.docID}`, state: { docID: props.data.docID} }}>View Playlist</Link>
+            <Link to={{pathname:`/playlist/${props.data.docID}`, state: { docID: props.data.docID} }}><button type='button'>View Playlist</button></Link>
             <button onClick={() => DeletePlaylist(props.data)}>DeletePlaylist</button>
         </div>)
     }
@@ -107,7 +107,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                         } 
                     }
                     renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-                    renderItem={({ value, props }) => <li {...props}><EachPlaylist key={value.docID} data={value}/></li>}
+                    renderItem={({ value, props }) => <div {...props}><EachPlaylist key={value.docID} data={value}/></div>}
             /> }
         </div>
     );

@@ -1,8 +1,8 @@
-.hidden {
+.HiddenPlayer {
   display: none;
 }
 
-.PlaylistPicker {
+.Mainpage {
   text-align: center;
   background-color: #282c34;
   min-height: 100vh;
@@ -12,6 +12,32 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+}
+
+.PlaylistPicker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  background-color: #282c34;
+  color: white;
+  height: 100vh;
+}
+
+.PlaylistPicker > *:first-child {
+  align-self: flex-end;
+  margin-top: 10px;
+  margin-right: 10px;
+  margin-bottom: 20px;
+}
+
+.PlaylistPickerEach {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.PlaylistPickerEach p {
+  text-align: center;
 }
 
 .MainActionBtn {
@@ -29,7 +55,7 @@
 
   background-color: #282c34;
   color: white;
-  height: 100vh;
+  height: 100%;
 }
 
 .MainDivFlex > *:first-child {
@@ -40,9 +66,31 @@
 }
 
 .PlaylistFooter {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "title title"
+    "seek seek"
+    "volume volume"
+    "buttons buttons";
+
+  background-color: #282c34;
+  color: white;
+}
+
+.PlaylistFooterTitle {
+  grid-area: title;
+}
+.PlaylistFooterSeek {
+  grid-area: seek;
+}
+.PlaylistFooterVolume {
+  grid-area: volume;
+}
+.PlaylistFooterButtons {
+  grid-area: buttons;
 }
 
 .AddBtn {
@@ -57,7 +105,7 @@
   margin: 4px 2px;
   transition-duration: 0.4s;
   cursor: pointer;
-  width: 100%;
+  width: 100vh;
 }
 
 .AddBtnBlack {
@@ -69,4 +117,12 @@
 .AddBtnBlack:hover {
   background-color: #555555;
   color: white;
+}
+
+.DropdownElement {
+  overflow: visible !important;
+}
+
+.RedSelected {
+  border: 20px red;
 }

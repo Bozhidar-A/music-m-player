@@ -17,8 +17,8 @@ function Playlist(props:any) {
   const [reactPlayerVolume, setReactPlayerVolume] = useState(0.5);
   const [reactPlayerDuration, setReactPlayerDuration] = useState(0);
   const [reactPlayerProgress, setReactPlayerProgress] = useState(0);
-  const [currPlayingURL, setCurrPlayingURL] = useState("");
-  const [showReactPlayer, setShowReactPlayer] = useState(false);
+  const [currPlayingElement, setCurrPlayingElement] = useState<IPlaylistItem|null>();
+  const [showReactPlayer, setShowReactPlayer] = useState(true);
   const [elementToUpdate, setElementToUpdate] = useState<IPlaylistItem>();
   const [action, setAction] = useState<string|null>(null);
   const reactPlayerRef = useRef<any>(null);
@@ -178,9 +178,9 @@ function Playlist(props:any) {
   /**
  * Makes the selected URL the currPlayingURL and makes the player render.
  */
-  function PlayURL(url:string) {
-    logging.info(`Playing url - ${url}`)
-    setCurrPlayingURL(url);
+  function PlayURL(element:IPlaylistItem) {
+    logging.info(`Playing url - ${element.url}`)
+    setCurrPlayingElement(element);
     setReactPlayerRender(true);
   }
 
@@ -188,17 +188,25 @@ function Playlist(props:any) {
   {
     //reached end of playlist, stop
     setReactPlayerRender(false);
-    setCurrPlayingURL("");
+    setCurrPlayingElement(null);
   }
 
   function GetPlayingIndex()
   {
-    return playlist.findIndex(e => e.url === currPlayingURL);
+    return playlist.findIndex(e => e.url === currPlayingElement?.url);
   }
 
   function GetSongByURL(url:string)
   {
     return playlist.findIndex(e => e.url === url);
+  }
+
+  function GetPlayingName()
+  {
+    let i = GetPlayingIndex();
+    i++;
+
+    return playlist[i].title;
   }
 
   function PlayNextURL()
@@ -213,7 +221,7 @@ function Playlist(props:any) {
     else
     {
       //play next URL
-      setCurrPlayingURL(playlist[i].url);
+      setCurrPlayingElement(playlist[i]);
       setReactPlayerPlaying(true);
     }
 
@@ -231,7 +239,7 @@ function Playlist(props:any) {
     else
     {
       //play prev URL
-      setCurrPlayingURL(playlist[i].url);
+      setCurrPlayingElement(playlist[i]);
       setReactPlayerPlaying(true);
     }
   }
@@ -254,6 +262,12 @@ function Playlist(props:any) {
     }
   }
 
+  function HandleSongUpdateRequest(value:IPlaylistItem)
+  {
+    setElementToUpdate(value); 
+    setAction("update");
+  }
+
   function FormatTime(seconds:number)
   {
     //if less then an hour display MM:SS
@@ -267,6 +281,11 @@ function Playlist(props:any) {
     }
   }
 
+  function FormatVolume(volume:number)
+  {
+    return Math.floor(volume*100);
+  }
+
   return (
     <div className={styles.MainDivFlex}>
       <ProfileDropdown></ProfileDropdown>
@@ -276,25 +295,26 @@ function Playlist(props:any) {
           <HandleAction></HandleAction>
         </div>
         
-        <div id="dnd">
+        <div>
           {/* <p>start dnd</p> */}
           <List
-            values={playlist}
-            onChange={({ oldIndex, newIndex }) =>
-            {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
-            }
-            renderList={({ children, props }) => <ul {...props}>{children}</ul>}
-            renderItem={({ value, props }) => <li {...props}>{value.title} | {value.url} 
-            <button onClick={() => PlayURL(value.url)}>Play</button> 
-            <button onClick={() => {setElementToUpdate(value); setAction("update")}}>Update</button>
-            <button onClick={() => {DeleteSong(value)}}>Delete</button>
-            </li>}
-          />
+              values={playlist}
+              onChange={({ oldIndex, newIndex }) =>
+              {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
+              }
+              renderList={({ children, props }) => <ul {...props}>{children}</ul>}
+              renderItem={({ value, props }) => <li {...props}>{value.title}
+              <button onClick={() => PlayURL(value)}>Play</button> 
+              <button onClick={() => HandleSongUpdateRequest(value)}>Update</button>
+              <button onClick={() => DeleteSong(value)}>Delete</button>
+              {/* <DropdownBuilder value={value} PlayURL={PlayURL} HandleSongUpdateRequest={HandleSongUpdateRequest} DeleteSong={DeleteSong} className={styles.DropdownElement}></DropdownBuilder> */}
+              </li>}
+            />
           {/* <p>end dnd</p> */}
           <br></br>
-          <div className={showReactPlayer ? "block" : "hidden"} id="ReactPlayer">{reactPlayerRender && <ReactPlayer 
+          <div style={showReactPlayer ? undefined : {display:'none'}} id="ReactPlayer">{reactPlayerRender && <ReactPlayer 
             ref={reactPlayerRef} 
-            url={currPlayingURL} 
+            url={currPlayingElement?.url} 
             volume={reactPlayerVolume} 
             onError={(e) => { HandleOnError(e) }} 
             controls={true} playing={reactPlayerPlaying} 
@@ -303,15 +323,28 @@ function Playlist(props:any) {
             onDuration={(e) => setReactPlayerDuration(e)}></ReactPlayer>}
           </div>
           {reactPlayerRender && <footer id="controls" className={styles.PlaylistFooter}>
-            <p>Volume</p>
-            <input type="range" min="0" max="1" step="0.1" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
-            <p>Seek</p>
-            <input type="range" min="0" max={reactPlayerDuration} step="any" value={reactPlayerProgress} onChange={(e) => HandleSeek(e.target.value)}/>
-            <p>{FormatTime(reactPlayerProgress)}/{FormatTime(reactPlayerDuration)}</p>
-            <button onClick={() => PlayPrevURL()} disabled={GetPlayingIndex() === 0 ? true : false}>Prev</button>
-            <button onClick={() => PlayNextURL()} disabled={GetPlayingIndex() === playlist.length - 1 ? true : false}>Next</button>
-            <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
-            <button onClick={() => setShowReactPlayer(!showReactPlayer)} >{showReactPlayer ? "Hide Player" : "Show Player"}</button>
+            <div className={styles.PlaylistFooterTitle}>
+              <p>Playing - {currPlayingElement?.title}</p>
+            </div>
+            
+            <div className={styles.PlaylistFooterSeek}>
+              <p>Seek</p>
+              <input type="range" min="0" max={reactPlayerDuration} step="any" value={reactPlayerProgress} onChange={(e) => HandleSeek(e.target.value)}/>
+              <p>{FormatTime(reactPlayerProgress)}/{FormatTime(reactPlayerDuration)}</p>
+            </div>
+
+            <div className={styles.PlaylistFooterVolume}>
+              <p>Volume</p>
+              <input type="range" min="0" max="1" step="0.01" value={reactPlayerVolume} onChange={(e) => setReactPlayerVolume(parseFloat(e.target.value))}/>
+              <p>{FormatVolume(reactPlayerVolume)}%</p>
+            </div>
+
+            <div className={styles.PlaylistFooterButtons}>
+              <button onClick={() => PlayPrevURL()} disabled={GetPlayingIndex() === 0 ? true : false}>Prev</button>
+              <button onClick={() => PlayNextURL()} disabled={GetPlayingIndex() === playlist.length - 1 ? true : false}>Next</button>
+              <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
+              <button onClick={() => setShowReactPlayer(!showReactPlayer)} >{showReactPlayer ? "Hide Player" : "Show Player"}</button>
+            </div>
           </footer>}
         </div>
       </div>
