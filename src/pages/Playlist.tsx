@@ -18,7 +18,7 @@ function Playlist(props:any) {
   const [reactPlayerDuration, setReactPlayerDuration] = useState(0);
   const [reactPlayerProgress, setReactPlayerProgress] = useState(0);
   const [currPlayingElement, setCurrPlayingElement] = useState<IPlaylistItem|null>();
-  const [showReactPlayer, setShowReactPlayer] = useState(true);
+  const [showReactPlayer, setShowReactPlayer] = useState(false);
   const [elementToUpdate, setElementToUpdate] = useState<IPlaylistItem>();
   const [action, setAction] = useState<string|null>(null);
   const reactPlayerRef = useRef<any>(null);
@@ -290,7 +290,6 @@ function Playlist(props:any) {
     <div className={styles.MainDivFlex}>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
-        {/* <AddSongDialog></AddSongDialog> */}
         <div id="action" className={styles.MainActionBtn}>
           <HandleAction></HandleAction>
         </div>
@@ -332,7 +331,7 @@ function Playlist(props:any) {
             onProgress={(e) => setReactPlayerProgress(Math.floor(e.playedSeconds))} 
             onDuration={(e) => setReactPlayerDuration(e)}></ReactPlayer>}
           </div>
-          {reactPlayerRender && <footer id="controls" className={styles.PlaylistFooter}>
+          {reactPlayerRender && <div id="controls" className={styles.PlaylistFooter}>
             <div className={styles.PlaylistFooterTitle}>
               <p>Playing - {currPlayingElement?.title}</p>
             </div>
@@ -355,7 +354,7 @@ function Playlist(props:any) {
               <button onClick={() => setReactPlayerPlaying(!reactPlayerPlaying)} >{reactPlayerPlaying ? "Pause" : "Play"}</button>
               <button onClick={() => setShowReactPlayer(!showReactPlayer)} >{showReactPlayer ? "Hide Player" : "Show Player"}</button>
             </div>
-          </footer>}
+          </div>}
         </div>
       </div>
     </div>
