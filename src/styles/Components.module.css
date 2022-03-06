@@ -2,6 +2,10 @@
   display: none;
 }
 
+.DarkTheme {
+  background-color: #282c34;
+}
+
 .Mainpage {
   text-align: center;
   background-color: #282c34;
@@ -79,6 +83,10 @@
 
   background-color: #282c34;
   color: white;
+
+  position: -webkit-sticky;
+  position: sticky;
+  bottom: 0;
 }
 
 .PlaylistFooterTitle {
@@ -126,4 +134,10 @@
 
 .RedSelected {
   border: 20px red;
+}
+
+.CenteredInDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }

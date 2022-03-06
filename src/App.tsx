@@ -5,6 +5,7 @@ import AuthRoute from './components/AuthRoute';
 import { auth } from './config/firebase';
 import logging from './config/logging';
 import routes from './config/routes';
+import styles from "./styles/Components.module.css"
 
 export interface IAppProps { }
 
@@ -30,7 +31,7 @@ const App: React.FunctionComponent<IAppProps> = props => {
         return <Spinner color="info" />
 
     return (
-        <div>
+        <div className={styles.DarkTheme}>
             <Switch>
                 {routes.map((route, index) => 
                     <Route
