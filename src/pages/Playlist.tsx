@@ -7,6 +7,7 @@ import CORSProxyFetchChain from '../components/CORSProxyFetchChain';
 import ProfileDropdown from '../components/ProfileDropdown';
 import styles from "../styles/Components.module.css"
 import logging from '../config/logging';
+import { auth } from '../config/firebase';
 
 function Playlist(props:any) {
 
@@ -22,17 +23,23 @@ function Playlist(props:any) {
   const [elementToUpdate, setElementToUpdate] = useState<IPlaylistItem>();
   const [action, setAction] = useState<string|null>(null);
   const reactPlayerRef = useRef<any>(null);
+  const [firebaseError, setFirebaseError] = useState(false)
+  const [playlistOwner, setPlaylistOwner] = useState("")
 
   //firebase
   var db = firebase.firestore()
 
   useEffect(() => {
-    db.collection("playlistsData").doc(props.location.state.docID).get().then(doc => {
+    db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).get().then(doc => {
       if(doc.exists)
       {
         setPlaylist(doc.data()!.songs)
+        setPlaylistOwner(doc.data()!.uid)
       }
-    }).catch(err => logging.error(err))
+    }).catch(err => {
+      logging.error(err);
+      setFirebaseError(true);
+    })
   }, [])
 
   function HandleAction()
@@ -116,12 +123,12 @@ function Playlist(props:any) {
       setTitleUserInput("");
   
       //update db
-      db.collection("playlistsData").doc(props.location.state.docID).update({
+      db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).update({
         songs:firebase.firestore.FieldValue.arrayUnion({ url: inputURL, title: titleToSet })
       }).catch(() => {
-        logging.error(`Failed to updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+        logging.error(`Failed to updated playlist ${new URL(window.location.href).pathname.split("/")[2]} with song url - ${inputURL} and title - ${titleToSet}`)
       }).then(() => {
-        logging.info(`Updated playlist ${props.location.state.docID} with song url - ${inputURL} and title - ${titleToSet}`)
+        logging.info(`Updated playlist ${new URL(window.location.href).pathname.split("/")[2]} with song url - ${inputURL} and title - ${titleToSet}`)
       })
     }
 
@@ -154,12 +161,12 @@ function Playlist(props:any) {
       tmp[GetSongByURL(elementToUpdate!.url)] = {url:updatedURL!,title:updatedTitle!};
       setPlaylist(arr => [...tmp]);
 
-      db.collection("playlistsData").doc(props.location.state.docID).update({
+      db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).update({
         songs:tmp
       }).catch(() => {
-        logging.error(`Failed to update playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+        logging.error(`Failed to update playlist ${new URL(window.location.href).pathname.split("/")[2]} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
       }).then(() => {
-        logging.info(`Updated playlist ${props.location.state.docID} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
+        logging.info(`Updated playlist ${new URL(window.location.href).pathname.split("/")[2]} with song url - ${updatedURL} and title - ${updatedTitle} from url - ${elementToUpdate?.url} and title - ${elementToUpdate?.title}`)
       })
     }
 
@@ -252,12 +259,12 @@ function Playlist(props:any) {
       tmp.splice(GetSongByURL(song.url), 1)
       setPlaylist(arr => [...tmp]);
 
-      db.collection("playlistsData").doc(props.location.state.docID).update({
+      db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).update({
         songs:tmp
       }).catch(() => {
-        logging.error(`Failed to update playlist ${props.location.state.docID} with deleteion of song url - ${song.url} and title - ${song.title}`)
+        logging.error(`Failed to update playlist ${new URL(window.location.href).pathname.split("/")[2]} with deleteion of song url - ${song.url} and title - ${song.title}`)
       }).then(() => {
-        logging.info(`Updated playlist ${props.location.state.docID} with deleteion of song url - ${song.url} and title - ${song.title}`)
+        logging.info(`Updated playlist ${new URL(window.location.href).pathname.split("/")[2]} with deleteion of song url - ${song.url} and title - ${song.title}`)
       })
     }
   }
@@ -287,12 +294,14 @@ function Playlist(props:any) {
   }
 
   return (
-    <div className={styles.MainDivFlex}>
+    <>
+    {firebaseError ? <p className={styles.WhiteCenteredText}>An error has occured. Please check the url you used and try again.</p>: <div className={styles.MainDivFlex}>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
+        {auth.currentUser == null || auth.currentUser.uid !== playlistOwner ? null : 
         <div id="action" className={styles.MainActionBtn}>
           <HandleAction></HandleAction>
-        </div>
+        </div>}
         
         <div>
           {/* <p>start dnd</p> */}
@@ -305,7 +314,7 @@ function Playlist(props:any) {
                   
                   //I don't like this. I am rewriting the whole array instead of changing the order.
                   //TODO fix this
-                  db.collection("playlistsData").doc(props.location.state.docID).set({
+                  db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).set({
                     songs: temp
                   }).catch(e => logging.error(e))
                 } 
@@ -314,8 +323,9 @@ function Playlist(props:any) {
               renderList={({ children, props }) => <ul {...props}>{children}</ul>}
               renderItem={({ value, props }) => <li {...props}>{value.title}
               <button onClick={() => PlayURL(value)}>Play</button> 
+              {auth.currentUser == null || auth.currentUser.uid !== playlistOwner ? null : <>
               <button onClick={() => HandleSongUpdateRequest(value)}>Update</button>
-              <button onClick={() => DeleteSong(value)}>Delete</button>
+              <button onClick={() => DeleteSong(value)}>Delete</button> </>}
               {/* <DropdownBuilder value={value} PlayURL={PlayURL} HandleSongUpdateRequest={HandleSongUpdateRequest} DeleteSong={DeleteSong} className={styles.DropdownElement}></DropdownBuilder> */}
               </li>}
             />
@@ -357,7 +367,7 @@ function Playlist(props:any) {
           </div>}
         </div>
       </div>
-    </div>
+    </div>}</>
   );
 }
 

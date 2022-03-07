@@ -79,7 +79,7 @@ const routes: IRoute[] = [
         exact: false,
         component: Playlist,
         name: 'Playlist',
-        protected: true
+        protected: false
     },
     {
         path: '*',

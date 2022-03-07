@@ -36,8 +36,9 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
     {
         return(<div className={styles.PlaylistPickerEach}>
             <p>{props.data.name}</p>
-            <Link to={{pathname:`/playlist/${props.data.docID}`, state: { docID: props.data.docID} }}><button type='button'>View Playlist</button></Link>
+            <Link to={{pathname:`/playlist/${props.data.docID}`}}><button type='button'>View Playlist</button></Link>
             <button onClick={() => DeletePlaylist(props.data)}>DeletePlaylist</button>
+            <button onClick={() => SwitchPublicPrivate(props.data)}>Playlist is {props.data.public ? "Public" : "Private"} - Click to change that</button>
         </div>)
     }
 
@@ -53,7 +54,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                 setPlaylists(arr => arr.filter(el => el !== obj))
 
                 //firebase update
-                db.collection("playlistsData").doc(obj.doc).delete().catch(err => {
+                db.collection("playlistsData").doc(obj.docID).delete().catch(err => {
                     logging.error("Failed to delete playlistsData doc on playlist delete")
                     logging.error(err)
                 })
@@ -70,12 +71,12 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
         
         if(name !== null)
         {
-            db.collection("playlistsData").add({songs:[]}).then(doc => {
+            db.collection("playlistsData").add({songs:[], uid:auth.currentUser?.uid, public:false}).then(doc => {
 
-                setPlaylists(arr => [{name:name!, docID:doc.id}, ...arr]);
+                setPlaylists(arr => [{name:name!, docID:doc.id, public:false}, ...arr]);
 
                 db.collection("playlists").doc(auth.currentUser?.uid).update({
-                    arr: firebase.firestore.FieldValue.arrayUnion({name:name, docID:doc.id})
+                    arr: firebase.firestore.FieldValue.arrayUnion({name:name, docID:doc.id, public:false, uid:auth.currentUser?.uid})
                 }).catch(err => {
                     logging.error("Failed to add playlist to user playlists");
                     logging.error(err);
@@ -86,6 +87,28 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
                 logging.error(err);
             })
         }
+    }
+
+    function SwitchPublicPrivate(obj:IAllPlaylists){
+        var tmp = playlists;
+        var tmpIndex = tmp.indexOf(obj)
+        tmp[tmpIndex].public = !tmp[tmpIndex].public;
+        setPlaylists(arr => [...tmp]);
+
+        db.collection("playlists").doc(auth.currentUser?.uid).update({
+            arr: tmp
+        }).then(() => {
+            logging.info("Updated playlists with new public state");
+
+            db.collection("playlistsData").doc(obj.docID).update({public:tmp[tmpIndex].public}).then(() => {
+                logging.info("Updated playlistsData with new public state");
+            }).catch((err) => {
+                logging.error(err)
+            })
+
+        }).catch((err) => {
+            logging.error(err)
+        })
     }
 
     return (
