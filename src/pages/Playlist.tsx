@@ -31,12 +31,15 @@ function Playlist(props:any) {
 
   useEffect(() => {
     db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).get().then(doc => {
+      console.log(doc.data())
       if(doc.exists)
       {
         setPlaylist(doc.data()!.songs)
+        console.log(doc.data()!.uid)
         setPlaylistOwner(doc.data()!.uid)
       }
     }).catch(err => {
+      console.log(err)
       logging.error(err);
       setFirebaseError(true);
     })
@@ -293,12 +296,20 @@ function Playlist(props:any) {
     return Math.floor(volume*100);
   }
 
+  function CheckLoggedinOwner(){
+    if(auth.currentUser == null || auth.currentUser.uid !== playlistOwner){
+      return true;
+    }
+
+    return false;
+  }
+
   return (
     <>
     {firebaseError ? <p className={styles.WhiteCenteredText}>An error has occured. Please check the url you used and try again.</p>: <div className={styles.MainDivFlex}>
       <ProfileDropdown></ProfileDropdown>
       <div id="Player">
-        {auth.currentUser == null || auth.currentUser.uid !== playlistOwner ? null : 
+        {CheckLoggedinOwner() ? null : 
         <div id="action" className={styles.MainActionBtn}>
           <HandleAction></HandleAction>
         </div>}
@@ -314,9 +325,13 @@ function Playlist(props:any) {
                   
                   //I don't like this. I am rewriting the whole array instead of changing the order.
                   //TODO fix this
-                  db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).set({
-                    songs: temp
-                  }).catch(e => logging.error(e))
+                  if(!CheckLoggedinOwner()){
+                    db.collection("playlistsData").doc(new URL(window.location.href).pathname.split("/")[2]).update({
+                      songs: temp
+                      
+                    }).catch(e => logging.error(e))
+                  } 
+                  
                 } 
               // {setPlaylist(arrayMove(playlist, oldIndex, newIndex))}
               }

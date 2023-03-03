@@ -73,7 +73,7 @@ const PlaylistPicker: React.FunctionComponent<IPageProps> = props => {
         {
             db.collection("playlistsData").add({songs:[], uid:auth.currentUser?.uid, public:false}).then(doc => {
 
-                setPlaylists(arr => [{name:name!, docID:doc.id, public:false}, ...arr]);
+                setPlaylists(arr => [{name:name!, docID:doc.id, public:false, uid:auth.currentUser?.uid }, ...arr]);
 
                 db.collection("playlists").doc(auth.currentUser?.uid).update({
                     arr: firebase.firestore.FieldValue.arrayUnion({name:name, docID:doc.id, public:false, uid:auth.currentUser?.uid})
